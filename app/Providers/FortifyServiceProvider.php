@@ -2,17 +2,20 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Laravel\Fortify\Fortify;
+use Illuminate\Support\Facades\Auth;
 use App\Actions\Fortify\CreateNewUser;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
-use App\Actions\Fortify\UpdateUserProfileInformation;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
+use App\Actions\Fortify\UpdateUserProfileInformation;
 use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -61,7 +64,7 @@ class FortifyServiceProvider extends ServiceProvider
                             'user' => auth()->user(),
                             'redirect_url' => route('home')
                         ]
-                    ]);
+                    ], 201);
                 }
             }
         });
@@ -74,11 +77,50 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->instance(EmailVerificationNotificationSentResponse::class, new class implements EmailVerificationNotificationSentResponse {
             public function toResponse($request)
             {
-                return response()->json([
-                    'success' => true, 
-                    'message' => 'A new email verification link has been emailed to you!', 
-                    'data' => null
-                ]);
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true, 
+                        'message' => 'A new email verification link has been emailed to you!', 
+                        'data' => null
+                    ]);
+                }
+            }
+        });
+
+        /* Login */
+        Fortify::loginView(function () {
+            return view('auth.login', ['title' => 'Login']);
+        });
+
+        $this->app->instance(LoginResponse::class, new class implements LoginResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'You have successfully logged in your account.', 
+                        'data' => [
+                            'redirect_url' => route('home')
+                        ],
+                    ]);
+                }
+            }
+        });
+
+        /* Logout */
+        $this->app->instance(LogoutResponse::class, new class implements LogoutResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'You have successfully logged out your account.', 
+                        'data' => [
+                            'redirect_url' => route('login')
+                        ],
+                    ]);
+                }
             }
         });
     }

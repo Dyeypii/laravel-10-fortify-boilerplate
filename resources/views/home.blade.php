@@ -13,5 +13,12 @@
     </head>
     <body class="antialiased">
         HOME
+
+        <form action="{{ route('logout') }}" method="post" id="logoutForm">
+            @csrf
+            <button type="submit">Logout</button>
+        </form>
+
+        @vite(['resources/ts/app.ts'])
     </body>
 </html>

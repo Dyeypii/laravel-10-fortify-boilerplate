@@ -19,6 +19,7 @@ use Laravel\Fortify\Contracts\PasswordResetResponse;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
 use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
+use Laravel\Fortify\Contracts\PasswordConfirmedResponse;
 use Laravel\Fortify\Contracts\PasswordUpdateResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
@@ -165,6 +166,22 @@ class FortifyServiceProvider extends ServiceProvider
                 }
             }
         });
+
+        /* Confirm Password */
+        $this->app->instance(PasswordConfirmedResponse::class, new class implements PasswordConfirmedResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'You have successfully confirmed your password.', 
+                        'data' => [
+                            'redirectUrl' => $request->session()->get('url.intended')
+                        ],
+                    ]);
+                }
+            }
+        });
     }
 
     /**
@@ -211,6 +228,11 @@ class FortifyServiceProvider extends ServiceProvider
         /* Reset Password */
         Fortify::resetPasswordView(function (Request $request) {
             return view('auth.reset-password', ['title' => 'Reset Password', 'request' => $request]);
+        });
+
+        /* Confirm Password */
+        Fortify::confirmPasswordView(function () {
+            return view('auth.confirm-password', ['title' => 'Confirm Password']);
         });
     }
 }

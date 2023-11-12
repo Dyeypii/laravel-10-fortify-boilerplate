@@ -17,5 +17,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::view('/home', 'home')->middleware(['auth', 'verified'])->name('home');
-Route::view('/update-profile-information', 'common.account.update-profile-information')->middleware(['auth', 'verified'])->name('update-profile-information');
+Route::view('/home', 'home')->middleware(['auth', 'auth.session', 'verified'])->name('home');
+Route::view('/update-profile-information', 'common.account.update-profile-information')->middleware(['auth', 'auth.session', 'verified'])->name('update-profile-information');
+Route::view('/update-password', 'common.account.update-password')->middleware(['auth', 'auth.session', 'verified'])->name('update-password');

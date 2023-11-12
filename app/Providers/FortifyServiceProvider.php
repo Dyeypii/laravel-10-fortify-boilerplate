@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Laravel\Fortify\Contracts\LockoutResponse;
 use Laravel\Fortify\Fortify;
 use App\Actions\Fortify\CreateNewUser;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +19,7 @@ use Laravel\Fortify\Contracts\PasswordResetResponse;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
 use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
+use Laravel\Fortify\Contracts\PasswordUpdateResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -132,7 +134,6 @@ class FortifyServiceProvider extends ServiceProvider
         );
 
         /* Update Profile Information */
-        /* Logout */
         $this->app->instance(ProfileInformationUpdatedResponse::class, new class implements ProfileInformationUpdatedResponse {
             public function toResponse($request)
             {
@@ -146,6 +147,20 @@ class FortifyServiceProvider extends ServiceProvider
                         'data' => [
                             'redirectUrl' => $redirectUrl
                         ],
+                    ]);
+                }
+            }
+        });
+
+        /* Update Password */
+        $this->app->instance(PasswordUpdateResponse::class, new class implements PasswordUpdateResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'You have successfully updated your password.', 
+                        'data' => null,
                     ]);
                 }
             }

@@ -12,6 +12,8 @@ export default defineConfig({
                 'resources/ts/auth/verify-email.ts',
                 'resources/ts/auth/forgot-password.ts',
                 'resources/ts/auth/reset-password.ts',
+                'resources/ts/common/account/update-profile-information.ts',
+                'resources/ts/common/account/update-password.ts',
             ],
             refresh: true,
         }),

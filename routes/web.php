@@ -18,3 +18,4 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::view('/home', 'home')->middleware(['auth', 'verified'])->name('home');
+Route::view('/update-profile-information', 'common.account.update-profile-information')->middleware(['auth', 'verified'])->name('update-profile-information');

@@ -14,9 +14,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
-use App\Actions\Fortify\UpdateUserProfileInformation;
-use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
 use Laravel\Fortify\Contracts\PasswordResetResponse;
+use App\Actions\Fortify\UpdateUserProfileInformation;
+use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
+use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -48,7 +49,6 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->instance(EmailVerificationNotificationSentResponse::class, new class implements EmailVerificationNotificationSentResponse {
             public function toResponse($request)
             {
-
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => true, 
@@ -131,20 +131,25 @@ class FortifyServiceProvider extends ServiceProvider
             }
         );
 
-        // $this->app->instance(PasswordResetResponse::class, new class implements PasswordResetResponse {
-        //     public function toResponse($request)
-        //     {
-        //         if ($request->wantsJson()) {
-        //             return response()->json([
-        //                 'success' => true,
-        //                 'message' => 'You have successfully updated your password.', 
-        //                 'data' => [
-        //                     'redirect_url' => route('login')
-        //                 ],
-        //             ]);
-        //         }
-        //     }
-        // });
+        /* Update Profile Information */
+        /* Logout */
+        $this->app->instance(ProfileInformationUpdatedResponse::class, new class implements ProfileInformationUpdatedResponse {
+            public function toResponse($request)
+            {
+                $emailVerifiedAt = auth()->user()->email_verified_at;
+                $verifyEmailMessage =  !$emailVerifiedAt ? ' Please verify your new email.': '';
+                $redirectUrl = !$emailVerifiedAt ? route('verification.notice') : route('update-profile-information');
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'You have successfully updated your information.' . $verifyEmailMessage, 
+                        'data' => [
+                            'redirectUrl' => $redirectUrl
+                        ],
+                    ]);
+                }
+            }
+        });
     }
 
     /**

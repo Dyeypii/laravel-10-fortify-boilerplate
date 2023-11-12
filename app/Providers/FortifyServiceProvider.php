@@ -5,7 +5,6 @@ namespace App\Providers;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Fortify;
-use Illuminate\Support\Facades\Auth;
 use App\Actions\Fortify\CreateNewUser;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -17,6 +16,8 @@ use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
+use Laravel\Fortify\Contracts\PasswordResetResponse;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -25,34 +26,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
-    }
-
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        Fortify::createUsersUsing(CreateNewUser::class);
-        Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
-        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-
-        RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
-
-            return Limit::perMinute(5)->by($throttleKey);
-        });
-
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
-        });
-
-        /* Registration */
-        Fortify::registerView(function () {
-            return view('auth.register', ['title' => 'Register']);
-        });
-
+        /* Custom Responses */
+        /* Register */
         $this->app->instance(RegisterResponse::class, new class implements RegisterResponse {
             public function toResponse($request)
             {
@@ -70,10 +45,6 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         /* Email Verification */
-        Fortify::verifyEmailView(function () {
-            return view('auth.verify-email');
-        });
-
         $this->app->instance(EmailVerificationNotificationSentResponse::class, new class implements EmailVerificationNotificationSentResponse {
             public function toResponse($request)
             {
@@ -89,10 +60,6 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         /* Login */
-        Fortify::loginView(function () {
-            return view('auth.login', ['title' => 'Login']);
-        });
-
         $this->app->instance(LoginResponse::class, new class implements LoginResponse {
             public function toResponse($request)
             {
@@ -122,6 +89,108 @@ class FortifyServiceProvider extends ServiceProvider
                     ]);
                 }
             }
+        });
+
+        /* Forgot Password */
+        $this->app->bind(
+            SuccessfulPasswordResetLinkRequestResponse::class,
+            function () {
+                return new class implements SuccessfulPasswordResetLinkRequestResponse {
+                    public function toResponse($request)
+                    {
+                        if ($request->wantsJson()) {
+                            return response()->json([
+                                'success' => true,
+                                'message' => 'A password reset link has been emailed to you!',
+                                'data' => null
+                            ]);
+                        }
+                    }
+                };
+            }
+        );
+
+        /* Reset Password */
+        $this->app->bind(
+            PasswordResetResponse::class,
+            function () {
+                return new class implements PasswordResetResponse {
+                    public function toResponse($request)
+                    {
+                        if ($request->wantsJson()) {
+                            return response()->json([
+                                'success' => true,
+                                'message' => 'You have successfully updated your password.',
+                                'data' => [
+                                    'redirect_url' => route('login')
+                                ],
+                            ]);
+                        }
+                    }
+                };
+            }
+        );
+
+        // $this->app->instance(PasswordResetResponse::class, new class implements PasswordResetResponse {
+        //     public function toResponse($request)
+        //     {
+        //         if ($request->wantsJson()) {
+        //             return response()->json([
+        //                 'success' => true,
+        //                 'message' => 'You have successfully updated your password.', 
+        //                 'data' => [
+        //                     'redirect_url' => route('login')
+        //                 ],
+        //             ]);
+        //         }
+        //     }
+        // });
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        Fortify::createUsersUsing(CreateNewUser::class);
+        Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
+        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        RateLimiter::for('login', function (Request $request) {
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+
+            return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        RateLimiter::for('two-factor', function (Request $request) {
+            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+        });
+
+        /* Views */
+        /* Registration */
+        Fortify::registerView(function () {
+            return view('auth.register', ['title' => 'Register']);
+        });
+
+        /* Email Verification */
+        Fortify::verifyEmailView(function () {
+            return view('auth.verify-email');
+        });
+
+        /* Login */
+        Fortify::loginView(function () {
+            return view('auth.login', ['title' => 'Login']);
+        });
+
+        /* Forgot Password */
+        Fortify::requestPasswordResetLinkView(function () {
+            return view('auth.forgot-password', ['title' => 'Forgot Password']);
+        });
+
+        /* Reset Password */
+        Fortify::resetPasswordView(function (Request $request) {
+            return view('auth.reset-password', ['title' => 'Reset Password', 'request' => $request]);
         });
     }
 }

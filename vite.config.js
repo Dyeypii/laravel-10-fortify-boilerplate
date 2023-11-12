@@ -7,9 +7,11 @@ export default defineConfig({
             input: [
                 'resources/sass/app.scss', 
                 'resources/ts/app.ts',
-                'resources/ts/auth/login.ts',
                 'resources/ts/auth/register.ts',
-                'resources/ts/auth/verify-email.ts'
+                'resources/ts/auth/login.ts',
+                'resources/ts/auth/verify-email.ts',
+                'resources/ts/auth/forgot-password.ts',
+                'resources/ts/auth/reset-password.ts',
             ],
             refresh: true,
         }),

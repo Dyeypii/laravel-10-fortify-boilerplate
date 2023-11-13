@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const confirmPasswordForm = <HTMLFormElement>document.getElementById("confirmPasswordForm");
-
+const urlIntended = document.referrer;
 confirmPasswordForm?.addEventListener("submit", function (e) {
     e.preventDefault();
 
@@ -10,7 +10,7 @@ confirmPasswordForm?.addEventListener("submit", function (e) {
     axios.post(confirmPasswordForm.action, formData)
         .then(function (res) {
             console.log(res);
-            window.location.href = res.data.data.redirectUrl;
+            window.location.href = res.data.data.redirectUrl ?? urlIntended;
             // Handle the response as needed
         })
         .catch(function (err) {

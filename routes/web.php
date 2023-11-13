@@ -22,5 +22,7 @@ Route::get('/password-confirmed', function () {
 })->middleware('password.confirm');
 
 Route::view('/home', 'home')->middleware(['auth', 'auth.session', 'verified'])->name('home');
-Route::view('/update-profile-information', 'common.account.update-profile-information')->middleware(['auth', 'auth.session', 'verified'])->name('update-profile-information');
+Route::view('/update-profile-information', 'common.account.update-profile-information')->middleware(['auth', 'auth.session'])->name('update-profile-information');
 Route::view('/update-password', 'common.account.update-password')->middleware(['auth', 'auth.session', 'verified'])->name('update-password');
+
+Route::view('/security/two-factor', 'common.security.two-factor')->middleware(['auth', 'auth.session', 'verified'])->name('security.two-factor');

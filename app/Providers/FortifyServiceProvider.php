@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Laravel\Fortify\Contracts\LockoutResponse;
 use Laravel\Fortify\Fortify;
 use App\Actions\Fortify\CreateNewUser;
 use Illuminate\Support\ServiceProvider;
@@ -17,10 +16,17 @@ use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Contracts\PasswordResetResponse;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
-use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
-use Laravel\Fortify\Contracts\PasswordConfirmedResponse;
 use Laravel\Fortify\Contracts\PasswordUpdateResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+use Laravel\Fortify\Contracts\TwoFactorEnabledResponse;
+use Laravel\Fortify\Contracts\PasswordConfirmedResponse;
+use Laravel\Fortify\Contracts\TwoFactorDisabledResponse;
+use Laravel\Fortify\Contracts\TwoFactorConfirmedResponse;
+use Laravel\Fortify\Contracts\RecoveryCodesGeneratedResponse;
+use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
+use App\Actions\Fortify\CustomRedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -174,9 +180,88 @@ class FortifyServiceProvider extends ServiceProvider
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => true,
-                        'message' => 'You have successfully confirmed your password.', 
+                        'message' => 'You have successfully confirmed your password.',
                         'data' => [
                             'redirectUrl' => $request->session()->get('url.intended')
+                        ],
+                    ]);
+                }
+            }
+        });
+
+        /* Two Factor Authentication */
+        $this->app->instance(TwoFactorEnabledResponse::class, new class implements TwoFactorEnabledResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'The two factor authentication is enabled. Please finish configuring two factor authentication.', 
+                        'data' => [
+                            'redirectUrl' => route('security.two-factor')
+                        ]
+                    ]);
+                }
+            }
+        });
+
+        $this->app->instance(TwoFactorDisabledResponse::class, new class implements TwoFactorDisabledResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'The two factor authentication is disabled', 
+                        'data' => [
+                            'redirectUrl' => route('security.two-factor')
+                        ]
+                    ]);
+                }
+            }
+        });
+
+        $this->app->instance(TwoFactorConfirmedResponse::class, new class implements TwoFactorConfirmedResponse {
+            public function toResponse($request)
+            {
+                session(['status' => 'two-factor-authentication-confirmed']);
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'The two factor authentication is confirmed', 
+                        'data' => [
+                            'redirectUrl' => route('security.two-factor')
+                        ]
+                    ]);
+                }
+            }
+        });
+
+        $this->app->instance(RecoveryCodesGeneratedResponse::class, new class implements RecoveryCodesGeneratedResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'The new recovery codes are generated.', 
+                        'data' => [
+                            'recoveryCodes' => $request->user()->recoveryCodes(),
+                        ],
+                    ]);
+                }
+            }
+        });
+
+        $this->app->bind(RedirectIfTwoFactorAuthenticatable::class, CustomRedirectIfTwoFactorAuthenticatable::class);
+
+        $this->app->instance(TwoFactorLoginResponse::class, new class implements TwoFactorLoginResponse {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Two Factor Login Successful.', 
+                        'data' => [
+                            'redirectUrl' => $request->session()->get('url.intended') ?? route('home'),
                         ],
                     ]);
                 }
@@ -233,6 +318,11 @@ class FortifyServiceProvider extends ServiceProvider
         /* Confirm Password */
         Fortify::confirmPasswordView(function () {
             return view('auth.confirm-password', ['title' => 'Confirm Password']);
+        });
+
+        /* Two Factor Challenge */
+        Fortify::twoFactorChallengeView(function () {
+            return view('auth.two-factor-challenge');
         });
     }
 }

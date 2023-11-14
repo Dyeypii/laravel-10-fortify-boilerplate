@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const logoutForm = <HTMLFormElement>document.getElementById("logoutForm");
+const logoutButton = <HTMLAnchorElement | HTMLButtonElement>document.querySelector(".logout-btn");
 
-logoutForm?.addEventListener("submit", function (e) {
-    e.preventDefault();
-
+function handleLogout(logoutForm: HTMLFormElement){
     const formData = new FormData(logoutForm);
 
     axios.post(logoutForm.action, formData)
@@ -17,4 +16,14 @@ logoutForm?.addEventListener("submit", function (e) {
             console.error(err);
             // Handle the error as needed
         });
+}
+
+logoutForm?.addEventListener("submit", function (e) {
+    e.preventDefault();
+    handleLogout(logoutForm);
+});
+
+logoutButton?.addEventListener("click", function (e) {
+    e.preventDefault();
+    handleLogout(logoutForm);
 });

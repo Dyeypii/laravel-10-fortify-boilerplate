@@ -26,6 +26,7 @@ use Laravel\Fortify\Contracts\RecoveryCodesGeneratedResponse;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\ProfileInformationUpdatedResponse;
 use App\Actions\Fortify\CustomRedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\FailedPasswordConfirmationResponse;
 use Laravel\Fortify\Contracts\EmailVerificationNotificationSentResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 

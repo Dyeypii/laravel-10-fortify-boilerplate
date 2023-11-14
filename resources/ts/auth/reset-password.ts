@@ -10,7 +10,7 @@ resetPasswordForm?.addEventListener("submit", function (e) {
     axios.post(resetPasswordForm.action, formData)
         .then(function (res) {
             console.log(res);
-            // window.location.href = res.data.data.redirect_url;
+            window.location.href = res.data.data.redirect_url;
             // Handle the response as needed
         })
         .catch(function (err) {
